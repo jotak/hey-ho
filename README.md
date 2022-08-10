@@ -15,7 +15,7 @@ Just run:
 Options:
 
 ```
--c         Cleanup previous run and exit.
+-c         Cleanup namespaces and exit. Combine with -n to set the number of namespaces to delete.
 -n X       Number of namespaces. Default: 1
 -d X       Number of deployments per namespace. Default: 5
 -r X       Number of replicas per deployment. Default: 2

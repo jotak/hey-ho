@@ -9,7 +9,7 @@ show_help()
    echo
    echo "Syntax: hey-ho [options]"
    echo "Options:"
-   echo "-c         Cleanup previous run and exit."
+   echo "-c         Cleanup namespaces and exit. Combine with -n to set the number of namespaces to delete."
    echo "-n X       Number of namespaces. Default: 1"
    echo "-d X       Number of deployments per namespace. Default: 5"
    echo "-r X       Number of replicas per deployment. Default: 2"
