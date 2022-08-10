@@ -178,7 +178,7 @@ do
     if [[ $fake -eq 1 ]]; then
       echo "  pods= kubectl get pods -n ${NAMESPACE} -l app=${NAME} --no-headers -o custom-columns=':metadata.name' "
       echo "  For each pod, run:"
-      echo "    kubectl -n ${NAMESPACE} exec ${pod} -- /tmp/hey ${HEY_ARGS} ${TARGET} &"
+      echo "    kubectl -n ${NAMESPACE} exec <pod name> -- /tmp/hey ${HEY_ARGS} ${TARGET} &"
     else
       pods=`kubectl get pods -n ${NAMESPACE} -l app=${NAME} --no-headers -o custom-columns=":metadata.name"`
       for pod in $pods; do
