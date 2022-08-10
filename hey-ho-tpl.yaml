@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    part-of: hey-ho
+    app: ${NAME}
+  name: ${NAME}
+spec:
+  replicas: ${REPLICAS}
+  selector:
+    matchLabels:
+      app: ${NAME}
+  template:
+    metadata:
+      labels:
+        part-of: hey-ho
+        app: ${NAME}
+    spec:
+      containers:
+      - name: hey-ho
+        image: quay.io/jotak/hey-ho:0.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${NAME}
+  labels:
+    part-of: hey-ho
+    app: ${NAME}
+spec:
+  ports:
+  - name: http
+    port: 8080
+  selector:
+    app: ${NAME}
