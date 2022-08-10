@@ -1,6 +1,11 @@
 # Hey-Ho
 
-A simple script on top of [Rakyll's Hey](https://github.com/rakyll/hey) that deploys any number of Pods sending load to each other, for a given amount of time.
+A simple script on top of [Hey](https://github.com/rakyll/hey) that deploys any number of Pods sending load to each other, for a given period.
+
+It can be used to test cluster infrastructure performance and stability.
+
+![hey-ho demo](./hey-ho.gif)
+_Here showing also [NetObserv](https://github.com/netobserv/network-observability-operator) in the background_
 
 ## Run
 
