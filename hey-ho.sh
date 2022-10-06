@@ -66,13 +66,9 @@ fi
 target () {
   if [[ ${predictable} -eq 1 ]]; then
     ns=$1
-    dep=$(($2+1))
-    if [[ $dep -eq $deployments ]]; then
-      dep=0
-      ns=$(($1+1))
-      if [[ $ns -eq $namespaces ]]; then
-          ns=0
-      fi
+    dep=$((($2+1) % $deployments))
+    if [[ $dep -eq 0 ]]; then
+      ns=$((($1+1) % $namespaces))
     fi
   else
     ns=$(($RANDOM % namespaces))
