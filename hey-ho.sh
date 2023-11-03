@@ -163,24 +163,15 @@ do
 done
 
 # start sending load
-echo "Start sending load"
-for (( n=0; n<$namespaces; n++ ))
+echo "Start creating more RS"
+for (( it=0; it<10; it++ ))
 do
-  NAMESPACE="gallery$n"
-  for (( d=0; d<$deployments; d++ )); do
-    NAME="hey-ho-$d"
-    # Set $TARGET
-    target $n $d
-    if [[ $fake -eq 1 ]]; then
-      echo "  pods= kubectl get pods -n ${NAMESPACE} -l app=${NAME} --no-headers -o custom-columns=':metadata.name' "
-      echo "  For each pod, run:"
-      echo "    kubectl -n ${NAMESPACE} exec <pod name> -- /tmp/hey ${HEY_ARGS} ${TARGET} &"
-    else
-      pods=`kubectl get pods -n ${NAMESPACE} -l app=${NAME} --no-headers -o custom-columns=":metadata.name"`
-      for pod in $pods; do
-        echo "Starting hey on pod ${pod}"
-        kubectl -n ${NAMESPACE} exec ${pod} -- /tmp/hey ${HEY_ARGS} ${TARGET} &
-      done
-    fi
+  for (( n=0; n<$namespaces; n++ ))
+  do
+    NAMESPACE="gallery$n"
+    for (( d=0; d<$deployments; d++ )); do
+      NAME="hey-ho-$d"
+      kubectl -n ${NAMESPACE} set env deployments/${NAME} DUMMY_VAR=${it}
+    done
   done
 done
