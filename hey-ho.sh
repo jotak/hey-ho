@@ -63,18 +63,21 @@ if [[ $cleanup -eq 1 ]]; then
   exit 0
 fi
 
-target () {
+next_target=0
+nb_targets=$(($deployments * $namespaces))
+
+inc_target () {
   if [[ ${predictable} -eq 1 ]]; then
-    ns=$1
-    dep=$((($2+1) % $deployments))
-    if [[ $dep -eq 0 ]]; then
-      ns=$((($1+1) % $namespaces))
-    fi
+    next_target=$((($next_target+1) % $nb_targets))
   else
-    ns=$(($RANDOM % namespaces))
-    dep=$(($RANDOM % deployments))
+    next_target=$(($RANDOM % $nb_targets))
   fi
-  export TARGET="http://hey-ho-${dep}.gallery${ns}:8080"
+}
+
+target () {
+  ns=$(($next_target / $deployments))
+  dep=$(($next_target % $deployments))
+  echo "http://hey-ho-${dep}.gallery${ns}:8080"
 }
 
 export REPLICAS=${replicas}
@@ -163,14 +166,14 @@ do
 done
 
 # start sending load
-echo "Start sending load"
+echo "Start sending load - `date`"
 for (( n=0; n<$namespaces; n++ ))
 do
   NAMESPACE="gallery$n"
   for (( d=0; d<$deployments; d++ )); do
     NAME="hey-ho-$d"
-    # Set $TARGET
-    target $n $d
+    inc_target
+    TARGET=$(target)
     if [[ $fake -eq 1 ]]; then
       echo "  pods= kubectl get pods -n ${NAMESPACE} -l app=${NAME} --no-headers -o custom-columns=':metadata.name' "
       echo "  For each pod, run:"
