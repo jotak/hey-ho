@@ -18,6 +18,7 @@ show_help()
    echo "-q qps     Rate limit, in query per seconds. 0 means no limit. Default: 200"
    echo "-p         Predictable mode (no random target assignment). Default: disabled"
    echo "-y         Non-interactive mode, reply 'yes' to prompt. Default: disabled"
+   echo "-b         Bip when results are received"
    echo "-f         Fake / dry run. Default: disabled"
    echo "-h         Print this help."
    echo
@@ -37,7 +38,7 @@ workers=50
 duration=30s
 qps=200
 
-while getopts "h?cn:d:r:w:z:q:pyf" opt; do
+while getopts "h?cn:d:r:w:z:q:pybf" opt; do
   case $opt in
     h|\?)
       show_help
@@ -52,6 +53,7 @@ while getopts "h?cn:d:r:w:z:q:pyf" opt; do
     q) qps=$(( OPTARG )) ;;
     p) predictable=1 ;;
     y) yes=1 ;;
+    b) bipcmd="printf \\a" ;;
     f) fake=1 ;;
     *) echo 'error' >&2
        exit 1
@@ -107,6 +109,11 @@ if [[ ${predictable} -eq 1 ]]; then
 else
   echo " 🧞 Peers assigned randomly"
 fi
+if [[ "${bipcmd}" == "" ]]; then
+  echo " 🔇 No bip when finished"
+else
+  echo " 🔊 Bip when finished"
+fi
 echo "------"
 echo " 📟 'hey' command arguments: ${HEY_ARGS}"
 echo "------"
@@ -152,8 +159,7 @@ done
 
 # wait until they're all ready
 echo "Waiting pods availability..."
-for (( n=0; n<$namespaces; n++ ))
-do
+for (( n=0; n<$namespaces; n++ )); do
   NAMESPACE="gallery$n"
   for (( d=0; d<$deployments; d++ )); do
     NAME="hey-ho-$d"
@@ -166,9 +172,8 @@ do
 done
 
 # start sending load
-echo "Start sending load - `date`"
-for (( n=0; n<$namespaces; n++ ))
-do
+echo "Start sending load"
+for (( n=0; n<$namespaces; n++ )); do
   NAMESPACE="gallery$n"
   for (( d=0; d<$deployments; d++ )); do
     NAME="hey-ho-$d"
@@ -177,13 +182,14 @@ do
     if [[ $fake -eq 1 ]]; then
       echo "  pods= kubectl get pods -n ${NAMESPACE} -l app=${NAME} --no-headers -o custom-columns=':metadata.name' "
       echo "  For each pod, run:"
-      echo "    kubectl -n ${NAMESPACE} exec <pod name> -- /tmp/hey ${HEY_ARGS} ${TARGET} &"
+      echo "    { kubectl -n ${NAMESPACE} exec <pod name> -- /tmp/hey ${HEY_ARGS} ${TARGET}; date; ${bipcmd}; } &"
     else
       pods=`kubectl get pods -n ${NAMESPACE} -l app=${NAME} --no-headers -o custom-columns=":metadata.name"`
       for pod in $pods; do
         echo "Starting hey on pod ${pod}"
-        kubectl -n ${NAMESPACE} exec ${pod} -- /tmp/hey ${HEY_ARGS} ${TARGET} &
+        { kubectl -n ${NAMESPACE} exec ${pod} -- /tmp/hey ${HEY_ARGS} ${TARGET}; date; ${bipcmd}; } &
       done
     fi
   done
 done
+echo "It's `date`, come back in ${duration} for results."
