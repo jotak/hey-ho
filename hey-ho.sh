@@ -16,6 +16,7 @@ show_help()
    echo "-w X       Number of workers per replica. Default: 50"
    echo "-z time    Load sending duration, e.g. 10s or 3m. Default: 30s"
    echo "-q qps     Rate limit, in query per seconds. 0 means no limit. Default: 200"
+   echo "-t target  Single target mode. Default: disabled"
    echo "-p         Predictable mode (no random target assignment). Default: disabled"
    echo "-y         Non-interactive mode, reply 'yes' to prompt. Default: disabled"
    echo "-b         Bip when results are received"
@@ -38,7 +39,7 @@ workers=50
 duration=30s
 qps=200
 
-while getopts "h?cn:d:r:w:z:q:pybf" opt; do
+while getopts "h?cn:d:r:w:z:q:t:pybf" opt; do
   case $opt in
     h|\?)
       show_help
@@ -51,6 +52,7 @@ while getopts "h?cn:d:r:w:z:q:pybf" opt; do
     w) workers=$(( OPTARG )) ;;
     z) duration=$OPTARG ;;
     q) qps=$(( OPTARG )) ;;
+    t) single_target=$OPTARG ;;
     p) predictable=1 ;;
     y) yes=1 ;;
     b) bipcmd="printf \\a" ;;
@@ -103,6 +105,11 @@ if [[ ${qps} -ne 0 ]]; then
   echo " ${animal} Rate-limited at ${qps} queries per second"
 else
   echo " ⚡ Without any rate-limit"
+fi
+if [[ "${single_target}" == "" ]]; then
+  echo " 🕸️ Target each other"
+else
+  echo " 🏹 Single target: ${single_target}"
 fi
 if [[ ${predictable} -eq 1 ]]; then
   echo " 🤖 Peers assigned in a predictable way"
@@ -177,8 +184,12 @@ for (( n=0; n<$namespaces; n++ )); do
   NAMESPACE="gallery$n"
   for (( d=0; d<$deployments; d++ )); do
     NAME="hey-ho-$d"
-    inc_target
-    TARGET=$(target)
+    if [[ "$single_target" == "" ]]; then
+      inc_target
+      TARGET=$(target)
+    else
+      TARGET=$single_target
+    fi
     if [[ $fake -eq 1 ]]; then
       echo "  pods= kubectl get pods -n ${NAMESPACE} -l app=${NAME} --no-headers -o custom-columns=':metadata.name' "
       echo "  For each pod, run:"
