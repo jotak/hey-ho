@@ -16,6 +16,7 @@ show_help()
    echo "-w X       Number of workers per replica. Default: 50"
    echo "-z time    Load sending duration, e.g. 10s or 3m. Default: 30s"
    echo "-q qps     Rate limit, in query per seconds. 0 means no limit. Default: 200"
+   echo "-g name    Namespace name. Default: gallery"
    echo "-t target  Single target mode. Default: disabled"
    echo "-p         Predictable mode (no random target assignment). Default: disabled"
    echo "-y         Non-interactive mode, reply 'yes' to prompt. Default: disabled"
@@ -28,10 +29,11 @@ show_help()
 delete_namespaces () {
   for (( n=0; n<$1; n++ ))
   do
-    kubectl delete namespace gallery$n
+    kubectl delete namespace ${namespace}$n
   done
 }
 
+namespace="gallery"
 namespaces=1
 deployments=5
 replicas=2
@@ -39,7 +41,7 @@ workers=50
 duration=30s
 qps=200
 
-while getopts "h?cn:d:r:w:z:q:t:pybf" opt; do
+while getopts "h?cn:d:r:w:z:q:g:t:pybf" opt; do
   case $opt in
     h|\?)
       show_help
@@ -52,6 +54,7 @@ while getopts "h?cn:d:r:w:z:q:t:pybf" opt; do
     w) workers=$(( OPTARG )) ;;
     z) duration=$OPTARG ;;
     q) qps=$(( OPTARG )) ;;
+    g) namespace=$OPTARG ;;
     t) single_target=$OPTARG ;;
     p) predictable=1 ;;
     y) yes=1 ;;
@@ -81,7 +84,7 @@ inc_target () {
 target () {
   ns=$(($next_target / $deployments))
   dep=$(($next_target % $deployments))
-  echo "http://hey-ho-${dep}.gallery${ns}:8080"
+  echo "http://hey-ho-${dep}.${namespace}${ns}:8080"
 }
 
 export REPLICAS=${replicas}
@@ -147,7 +150,7 @@ echo ""
 echo "Deploying pods"
 for (( n=0; n<$namespaces; n++ ))
 do
-  export NAMESPACE="gallery$n"
+  export NAMESPACE="${namespace}$n"
   if [[ $fake -ne 1 ]]; then
     kubectl create namespace ${NAMESPACE}
   fi
@@ -167,7 +170,7 @@ done
 # wait until they're all ready
 echo "Waiting pods availability..."
 for (( n=0; n<$namespaces; n++ )); do
-  NAMESPACE="gallery$n"
+  NAMESPACE="${namespace}$n"
   for (( d=0; d<$deployments; d++ )); do
     NAME="hey-ho-$d"
     if [[ $fake -eq 1 ]]; then
@@ -181,7 +184,7 @@ done
 # start sending load
 echo "Start sending load"
 for (( n=0; n<$namespaces; n++ )); do
-  NAMESPACE="gallery$n"
+  NAMESPACE="${namespace}$n"
   for (( d=0; d<$deployments; d++ )); do
     NAME="hey-ho-$d"
     if [[ "$single_target" == "" ]]; then
