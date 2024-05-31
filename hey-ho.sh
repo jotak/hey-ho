@@ -200,7 +200,7 @@ for (( n=0; n<$namespaces; n++ )); do
     else
       pods=`kubectl get pods -n ${NAMESPACE} -l app=${NAME} --no-headers -o custom-columns=":metadata.name"`
       for pod in $pods; do
-        echo "Starting hey on pod ${pod}"
+        echo "Starting hey on pod ${pod} to target ${TARGET}"
         { kubectl -n ${NAMESPACE} exec ${pod} -- /tmp/hey ${HEY_ARGS} ${TARGET}; date; ${bipcmd}; } &
       done
     fi
