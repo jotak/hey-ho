@@ -18,6 +18,7 @@ show_help()
    echo "-q qps     Rate limit, in query per seconds. 0 means no limit. Default: 200"
    echo "-g name    Namespace name. Default: gallery"
    echo "-t target  Single target mode. Default: disabled"
+   echo "-u uid     User ID to use for security context. Default: disabled"
    echo "-p         Predictable mode (no random target assignment). Default: disabled"
    echo "-y         Non-interactive mode, reply 'yes' to prompt. Default: disabled"
    echo "-b         Bip when results are received"
@@ -40,8 +41,9 @@ replicas=2
 workers=50
 duration=30s
 qps=200
+run_as_user=""
 
-while getopts "h?cn:d:r:w:z:q:g:t:pybf" opt; do
+while getopts "h?cn:d:r:w:z:q:g:t:u:pybf" opt; do
   case $opt in
     h|\?)
       show_help
@@ -56,6 +58,7 @@ while getopts "h?cn:d:r:w:z:q:g:t:pybf" opt; do
     q) qps=$(( OPTARG )) ;;
     g) namespace=$OPTARG ;;
     t) single_target=$OPTARG ;;
+    u) run_as_user=$OPTARG ;;
     p) predictable=1 ;;
     y) yes=1 ;;
     b) bipcmd="printf \\a" ;;
@@ -88,6 +91,7 @@ target () {
 }
 
 export REPLICAS=${replicas}
+export RUN_AS_USER=${run_as_user}
 HEY_ARGS="-c ${workers} -z ${duration}"
 if [[ ${qps} -ne 0 ]]; then
   HEY_ARGS+=" -q ${qps}"
@@ -123,6 +127,11 @@ if [[ "${bipcmd}" == "" ]]; then
   echo " 🔇 No bip when finished"
 else
   echo " 🔊 Bip when finished"
+fi
+if [[ "${run_as_user}" == "" ]]; then
+  echo " 👤 No specific user"
+else
+  echo " 🙋 Run as user ${run_as_user}"
 fi
 echo "------"
 echo " 📟 'hey' command arguments: ${HEY_ARGS}"
